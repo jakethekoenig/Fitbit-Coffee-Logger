@@ -1,0 +1,69 @@
+.application-fill           { fill: fb-orange; }
+.foreground-fill            { fill: fb-white; }
+.background-fill            { fill: fb-black; }
+
+.defaultText {
+  font-size: 32;
+  font-family: System-Regular;
+  font-weight: regular;
+  text-length: 32;
+}
+
+#background {
+  width: 100%;
+  height: 100%;
+  fill: red;
+}
+
+
+.coffee-button #image {
+	href: "coffee.png";
+}
+
+.tea-button #image {
+	href: "tea.png";
+}
+
+.energy-button #image {
+	href: "energy.png";
+}
+
+.undo-button #image {
+	href: "undo.png";
+}
+
+#coffee {
+	x: 17;
+	y: 17;
+}
+
+#tea {
+	x: 17;
+	y: 120;
+}
+
+#energy {
+	x: 17;
+	y: 221;
+}
+
+#undo {
+	x: 221;
+	y: 221;
+}
+
+#coffee-text {
+	x: 130;
+	y: 75;
+}
+
+#tea-text {
+	x: 130;
+	y: 178;
+}
+
+#energy-text {
+	x: 130;
+	y: 281;
+}
+

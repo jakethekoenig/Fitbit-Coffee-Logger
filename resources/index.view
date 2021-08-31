@@ -1,0 +1,9 @@
+<svg>
+    <use id="coffee" href="#icon-button" class="large-button application-fill coffee-button" />
+    <use id="tea" href="#icon-button" class="large-button application-fill tea-button" />
+    <use id="energy" href="#icon-button" class="large-button application-fill energy-button" />
+    <text id="coffee-text" fill="orange" font-family="System-Regular">0</text>
+    <text id="tea-text" fill="orange" font-family="System-Regular">0</text>
+    <text id="energy-text" fill="orange" font-family="System-Regular">0</text>
+    <use id="undo" href="#icon-button" class="large-button application-fill undo-button" />
+</svg>
