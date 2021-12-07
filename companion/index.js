@@ -50,51 +50,11 @@ function drink(accessToken, drink_name) {
 		}).catch(err => console.log('[FETCH]: ' + err));
 }
 
-function containsCoffee(foods) {
-	for(const food in foods.foods) {
-		let f = foods.foods[food];
-		if (f.loggedFood && f.loggedFood.name==="Coffee") {
-			return true;
-		}
-	}
-	return false;
-}
-
 // helpers
 function today() {
 	let date = new Date();
 	return  `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
-
-function hadCoffee(accessToken) {
-	let todayDate = today();
-
-	fetch(`https://api.fitbit.com/1/user/-/foods/log/date/${todayDate}.json`, {
-		method: "GET",
-		headers: {
-			"Authorization": `Bearer ${accessToken}`
-		}
-})
-		.then(function(res) {
-			return res.json();
-		})
-		.then(function(data) {
-			let myData = {
-				hasCoffee: containsCoffee(data)
-			}
-			if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-				messaging.peerSocket.send(myData);
-			}
-		})
-		.catch(err => console.log('[FETCH]: ' + err));
-}
-settingsStorage.onchange = evt => {
-	if (evt.key === "oauth") {
-		// Settings page sent us an oAuth token
-		let data = JSON.parse(evt.newValue);
-		hadCoffee(data.access_token) ;
-	}
-};
 
 function restoreSettings() {
 	for (let index = 0; index < settingsStorage.length; index++) {
@@ -102,7 +62,6 @@ function restoreSettings() {
 		if (key && key === "oauth") {
 			// We already have an oauth token
 			let data = JSON.parse(settingsStorage.getItem(key))
-			hadCoffee(data.access_token);
 		}
 	}
 }

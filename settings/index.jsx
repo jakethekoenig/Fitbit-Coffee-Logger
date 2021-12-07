@@ -13,7 +13,7 @@ function mySettings(props) {
 		            authorizeUrl="https://www.fitbit.com/oauth2/authorize"
 		            requestTokenUrl="https://api.fitbit.com/oauth2/token"
 		            clientId={client.id}
-		            clientSecret={jclient.secret}
+		            clientSecret={client.secret}
 		            scope="nutrition"
 		          />
 		        </Section>
