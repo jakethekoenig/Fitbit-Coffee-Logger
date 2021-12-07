@@ -61,7 +61,6 @@ function undo() {
 	if (hist.length !== 0) {
 		let last = hist.pop();
 		data[last] = data[last] - 1;
-		drink_text_map[last].text = data[last];
 
 		let last_id = log_history.pop()
 
@@ -78,55 +77,33 @@ undoButton.addEventListener("click", (evt) => {
 	undo();
 });
 
-const coffeeButton = document.getElementById("coffee");
-const coffeeText = document.getElementById("coffee-text");
-coffeeText.text = last_data["coffee"];
-
-coffeeButton.addEventListener("click", (evt) => {
-	coffeeText.text = parseInt(coffeeText.text) + 1;
-	increment_drink("coffee");
-	if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-		messaging.peerSocket.send({"drink": "Coffee"});
-	} else {
-		console.log("Could not connect to phone");
-	}
-});
-
-
-const teaButton = document.getElementById("tea");
-const teaText = document.getElementById("tea-text");
-teaText.text = last_data["tea"];
-
-teaButton.addEventListener("click", (evt) => {
-	teaText.text = parseInt(teaText.text) + 1;
-	increment_drink("tea");
-	if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-		messaging.peerSocket.send({"drink": "Green Tea, Unsweetened"});
-	} else {
-		console.log("Could not connect to phone");
-	}
-});
-
-
-const energyButton = document.getElementById("energy");
-const energyText = document.getElementById("energy-text");
-energyText.text = last_data["energy"];
-
-energyButton.addEventListener("click", (evt) => {
-	energyText.text = parseInt(energyText.text) + 1;
-	increment_drink("energy");
-	if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-		messaging.peerSocket.send({"drink": "Red Bull, Sugarfree"});
-	} else {
-		console.log("Could not connect to phone");
-	}
-});
-
-const drink_text_map = {
-	"coffee": coffeeText,
-	"tea": teaText,
-	"energy": energyText,
+const coffee = { name: "coffee", api_name: "Coffee" };
+const tea    = { name: "tea",    api_name: "Green Tea, Unsweetened" };
+const energy = { name: "energy", api_name: "Red Bull, Sugarfree" };
+const drinks = {
+	coffee: coffee, 
+	tea: tea, 
+	energy: energy
 };
+
+for (const drink in drinks) {
+	const drinkButton = document.getElementById(drink);
+	const drinkText   = document.getElementById(drink + "-text");
+	drinks[drink].text = drinkText;
+	const api_name = drinks[drink].api_name;
+	drinkText.text = last_data[drink];
+
+	drinkButton.addEventListener("click", (evt) => {
+		drinkText.text = parseInt(drinkText.text) + 1;
+		increment_drink(drink);
+		if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
+			messaging.peerSocket.send({"drink": api_name});
+		} else {
+			console.log("Could not connect to phone");
+		}
+	});
+
+}
 
 messaging.peerSocket.onmessage = evt => {
 	let data  = fs.readFileSync("today.txt", "json");
