@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as document from "document";
 import * as messaging from "messaging";
+import { me } from "appbit";
 
 // On start up check for "today" file. Open it and if it has today property
 // equal to today. If it is before today delete it and make a new one with all
@@ -37,7 +38,6 @@ if (!found) {
 	make_today();
 }
 
-
 let last_data  = fs.readFileSync("today.txt", "json");
 let today = new Date();
 let last_day = new Date(last_data["day"]);
@@ -62,16 +62,24 @@ function undo() {
 		let last = hist.pop();
 		data[last] = data[last] - 1;
 
-		let last_id = log_history.pop()
+		if (to_add.length !== 0) {
+			to_add.pop();
+		} else {
+			let last_id = log_history.pop();
 
-		if (last_id && messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-			messaging.peerSocket.send({"undo": last_id});
+			if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
+				messaging.peerSocket.send({"undo": last_id});
+			} else {
+				console.log("Could not connect to phone");
+				to_delete.push(last_id);
+			}
 		}
-
 		fs.writeFileSync("today.txt", data, "json");
 	}
 }
 
+const to_add = []; // Just strings of drink names to send
+const to_delete = []; // ids of drinks
 const undoButton = document.getElementById("undo");
 undoButton.addEventListener("click", (evt) => {
 	undo();
@@ -99,6 +107,7 @@ for (const drink in drinks) {
 		if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
 			messaging.peerSocket.send({"drink": api_name});
 		} else {
+			to_add.push(api_name);
 			console.log("Could not connect to phone");
 		}
 	});
@@ -110,4 +119,19 @@ messaging.peerSocket.onmessage = evt => {
 	console.log(evt.data.id);
 	data["log_history"].push(evt.data.id);
 	fs.writeFileSync("today.txt", data, "json");
+}
+
+messaging.peerSocket.onopen = function () {
+	for (drink in to_add) {
+		messaging.peerSocket.send({"drink": drink});
+	}
+	for (drink in to_delete) {
+		messaging.peerSocket.send({"undo": drink});
+	}
+}
+
+me.unload () => {
+	// Should store to_add to_delete arrays
+	// Could store data as well instead of managing it throughout program.
+
 }
