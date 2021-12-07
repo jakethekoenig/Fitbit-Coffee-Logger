@@ -1,4 +1,4 @@
-import { client } from ./secrets.js
+import { client } from './secrets.js';
 
 function mySettings(props) {
 	  return (
@@ -12,8 +12,8 @@ function mySettings(props) {
 		            status="Login"
 		            authorizeUrl="https://www.fitbit.com/oauth2/authorize"
 		            requestTokenUrl="https://api.fitbit.com/oauth2/token"
-		            clientId=client.id
-		            clientSecret=client.secret
+		            clientId={client.id}
+		            clientSecret={jclient.secret}
 		            scope="nutrition"
 		          />
 		        </Section>
