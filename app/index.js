@@ -13,7 +13,6 @@ import { me } from "appbit";
 // The screen is 336x336 and the large icons are 96x96
 
 function make_today() {
-	let today = new Date();
 	let data  = {
 		"day": today,
 		"coffee": 0,
@@ -23,44 +22,69 @@ function make_today() {
 		"log_history": []
 	};
 	fs.writeFileSync("today.txt", data, "json");
+	return data;
 }
 
-const listDir = fs.listDirSync("/private/data");
-var found = false;
-var dirIter;
-while((dirIter = listDir.next()) && !dirIter.done) {
-	if (dirIter.value === "today.txt") {
-		found = true;
+function save_state(data, to_add, to_delete) {
+	let today = new Date();
+	fs.writeFileSync("to_add", {data: to_add, date: today}, "json");
+	fs.writeFileSync("to_delete", {data: to_delete, date: today}, "json");
+	fs.writeFileSync("today.txt", data, "json");
+}
+
+function load_state() {
+	if (!fs.existsSync("today.txt")) {
+		let last_data = make_today();
+	} else {
+		let last_data  = fs.readFileSync("today.txt", "json");
 	}
+
+	let today = new Date();
+	let last_day = new Date(last_data["day"]);
+	if (today.getDate() !== last_day.getDate() || today.getMonth() !== last_day.getMonth()) {
+		fs.unlinkSync("today.txt");
+		last_data = make_today();
+	}
+
+	const to_add = []; // Just strings of drink names to send
+	if (fs.existsSync("to_add")) {
+		let last_add = fs.readFileSync("to_add", "json");
+		if (today.getDate() === (new Date(last_add["date"])).getDate()) { // I won't persist overnight
+			to_add = last_add["data"];
+		}
+	}
+
+	const to_delete = []; // ids of drinks
+	if (fs.existsSync("to_delete")) {
+		let last_delete = fs.readFileSync("to_delete", "json");
+		if (today.getDate() === (new Date(last_delete["date"])).getDate()) { // I won't persist overnight
+			to_delete = last_delete["data"];
+		}
+	}
+	return {data: last_data, to_add: to_add, to_delete: to_delete};
 }
 
-if (!found) {
-	make_today();
-}
-
-let last_data  = fs.readFileSync("today.txt", "json");
-let today = new Date();
-let last_day = new Date(last_data["day"]);
-if (last_day.getDate() !== today.getDate() || last_day.getMonth() !== today.getMonth() || last_day.getFullYear() !== today.getFullYear()) {
-	fs.unlinkSync("today.txt");
-	make_today();
-	last_data  = fs.readFileSync("today.txt", "json");
-}
 
 function increment_drink(drink) {
 	let data  = fs.readFileSync("today.txt", "json");
 	data[drink] = data[drink] + 1;
 	data["history"].push(drink);
+	drinks[drink].text.text = data[drink];
 	fs.writeFileSync("today.txt", data, "json");
 }
 
 function undo() {
-	let data  = fs.readFileSync("today.txt", "json");
+	let state = load_state();
+	let data  = state["data"];
+	let to_add = state["to_add"];
+	let to_delete = state["to_delete"];
+
 	let hist = data["history"];
 	let log_history = data["log_history"];
 	if (hist.length !== 0) {
 		let last = hist.pop();
 		data[last] = data[last] - 1;
+		drinks[last].text.text = data[last];
 
 		if (to_add.length !== 0) {
 			to_add.pop();
@@ -74,12 +98,11 @@ function undo() {
 				to_delete.push(last_id);
 			}
 		}
-		fs.writeFileSync("today.txt", data, "json");
 	}
+	save_state(data, to_add, to_delete);
 }
 
-const to_add = []; // Just strings of drink names to send
-const to_delete = []; // ids of drinks
+
 const undoButton = document.getElementById("undo");
 undoButton.addEventListener("click", (evt) => {
 	undo();
@@ -94,20 +117,22 @@ const drinks = {
 	energy: energy
 };
 
+const state = load_state();
 for (const drink in drinks) {
 	const drinkButton = document.getElementById(drink);
 	const drinkText   = document.getElementById(drink + "-text");
 	drinks[drink].text = drinkText;
 	const api_name = drinks[drink].api_name;
-	drinkText.text = last_data[drink];
+	drinkText.text = state["data"][drink];
 
 	drinkButton.addEventListener("click", (evt) => {
-		drinkText.text = parseInt(drinkText.text) + 1;
 		increment_drink(drink);
 		if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
 			messaging.peerSocket.send({"drink": api_name});
 		} else {
-			to_add.push(api_name);
+			let state = load_state();
+			state["to_add"].push(api_name);
+			save_state(state["data"], state["to_add"], state["to_delete"]);
 			console.log("Could not connect to phone");
 		}
 	});
@@ -122,16 +147,16 @@ messaging.peerSocket.onmessage = evt => {
 }
 
 messaging.peerSocket.onopen = function () {
-	for (drink in to_add) {
+	console.log("socket opened");
+	const state = load_state();
+	for (drink in state["to_add"]) {
+		console.log(JSON.stringify(drink));
 		messaging.peerSocket.send({"drink": drink});
 	}
-	for (drink in to_delete) {
+	for (drink in state["to_delete"]) {
+		console.log(JSON.stringify(drink));
 		messaging.peerSocket.send({"undo": drink});
 	}
+	save_state(state["data"], [], []);
 }
 
-me.unload () => {
-	// Should store to_add to_delete arrays
-	// Could store data as well instead of managing it throughout program.
-
-}
