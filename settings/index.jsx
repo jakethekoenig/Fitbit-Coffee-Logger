@@ -3,8 +3,23 @@ import { client } from './secrets.js';
 function mySettings(props) {
 	  return (
 		      <Page>
+		  	<Section
+		          title={<Text bold align="center">Drink Selection</Text>}>
+		  <Toggle
+		  settingsKey="coffee"
+		  label="coffee"
+		  />
+		  <Toggle
+		  settingsKey="tea"
+		  label="tea"
+		  />
+		  <Toggle
+		  settingsKey="energy"
+		  label="energy drink"
+		  />
+			  </Section>
 		        <Section
-		          title={<Text bold align="center">Fitbit Account</Text>}>
+		          title={<Text bold align="center">Login to log to nutrition</Text>}>
 		          <Oauth
 		            settingsKey="oauth"
 		            title="Login"

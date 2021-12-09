@@ -13,6 +13,7 @@ import { me } from "appbit";
 // The screen is 336x336 and the large icons are 96x96
 
 function make_today() {
+	let today = new Date();
 	let data  = {
 		"day": today,
 		"coffee": 0,
@@ -140,10 +141,23 @@ for (const drink in drinks) {
 }
 
 messaging.peerSocket.onmessage = evt => {
-	let data  = fs.readFileSync("today.txt", "json");
-	console.log(evt.data.id);
-	data["log_history"].push(evt.data.id);
-	fs.writeFileSync("today.txt", data, "json");
+	console.log(JSON.stringify(evt));
+	if ("id" in evt.data) {
+		let data  = fs.readFileSync("today.txt", "json");
+		console.log(evt.data.id);
+		data["log_history"].push(evt.data.id);
+		fs.writeFileSync("today.txt", data, "json");
+	}
+	if ("key" in evt.data) {
+		if (evt.data.value === "false") {
+			document.getElementById(evt.data.key).style.display = "none";
+			document.getElementById(evt.data.key+"-text").style.display = "none";
+		} else {
+			document.getElementById(evt.data.key).style.display = "inline";
+			document.getElementById(evt.data.key+"-text").style.display = "inline";
+		}
+
+	}
 }
 
 messaging.peerSocket.onopen = function () {

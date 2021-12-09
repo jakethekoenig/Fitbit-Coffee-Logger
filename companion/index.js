@@ -20,9 +20,9 @@ function delete_drink(accessToken, log_id) {
 	fetch(`https://api.fitbit.com/1/user/-/foods/log/${log_id}.json`,
 		{
 			method: "DELETE",
-			headers: {
-				"Authorization": `Bearer ${accessToken}`
-			}
+				headers: {
+					"Authorization": `Bearer ${accessToken}`
+				}
 		}).then(function(res) {
 			console.log(JSON.stringify(res));
 		}).catch(err => console.log('[FETCH]: ' + err));
@@ -90,3 +90,12 @@ messaging.peerSocket.onmessage = evt => {
 		}
 	}
 }
+
+settingsStorage.addEventListener("change", evt => {
+	console.log(JSON.stringify(evt));
+	if (evt.oldValue !== evt.newValue) {
+		if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
+			messaging.peerSocket.send({key: evt.key, value: evt.newValue});
+		}
+	}
+});
