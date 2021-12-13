@@ -1,7 +1,7 @@
 <svg>
-    <use id="coffee" href="#icon-button" class="large-button application-fill coffee-button" />
-    <use id="tea" href="#icon-button" class="large-button application-fill tea-button" />
-    <use id="energy" href="#icon-button" class="large-button application-fill energy-button" />
+    <use id="coffee" href="#icon-button" class="large-button application-fill button-1-3" />
+    <use id="tea" href="#icon-button" class="large-button application-fill button-2-3" />
+    <use id="energy" href="#icon-button" class="large-button application-fill button-3-3" />
     <text id="coffee-text" fill="orange" font-family="System-Regular">0</text>
     <text id="tea-text" fill="orange" font-family="System-Regular">0</text>
     <text id="energy-text" fill="orange" font-family="System-Regular">0</text>

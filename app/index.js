@@ -26,11 +26,14 @@ function make_today() {
 	return data;
 }
 
-function save_state(data, to_add, to_delete) {
+function save_state(data, to_add, to_delete, settings) {
 	let today = new Date();
 	fs.writeFileSync("to_add", {data: to_add, date: today}, "json");
 	fs.writeFileSync("to_delete", {data: to_delete, date: today}, "json");
 	fs.writeFileSync("today.txt", data, "json");
+	if (settings) {
+		fs.writeFileSync("settings", settings, "json");
+	}
 }
 
 function load_state() {
@@ -62,7 +65,12 @@ function load_state() {
 			to_delete = last_delete["data"];
 		}
 	}
-	return {data: last_data, to_add: to_add, to_delete: to_delete};
+	if (!fs.existsSync("settings")) {
+		fs.writeFileSync("settings", {coffee: true, tea: true, energy: true}, "json");
+		// TODO sync this to companion.
+	}
+	const settings = fs.readFileSync("settings", "json");
+	return {data: last_data, to_add: to_add, to_delete: to_delete, settings: settings};
 }
 
 
@@ -100,7 +108,7 @@ function undo() {
 			}
 		}
 	}
-	save_state(data, to_add, to_delete);
+	save_state(data, to_add, to_delete, false);
 }
 
 
@@ -109,20 +117,51 @@ undoButton.addEventListener("click", (evt) => {
 	undo();
 });
 
-const coffee = { name: "coffee", api_name: "Coffee" };
-const tea    = { name: "tea",    api_name: "Green Tea, Unsweetened" };
-const energy = { name: "energy", api_name: "Red Bull, Sugarfree" };
+const coffee = { name: "coffee", api_name: "Coffee", on: true };
+const tea    = { name: "tea",    api_name: "Green Tea, Unsweetened", on: true };
+const energy = { name: "energy", api_name: "Red Bull, Sugarfree", on: true };
 const drinks = {
 	coffee: coffee, 
 	tea: tea, 
 	energy: energy
 };
 
+function render() {
+	let count = 0;
+	let settings = fs.readFileSync("settings", "json");
+	console.log(JSON.stringify(settings));
+	for (const drink in drinks) {
+		if (settings[drink]==="true") {
+			count += 1;
+		}
+	}
+	let found = 1;
+	let button_class = "large-button application-fill "; 
+	if (count<3) {
+		button_class = "extra-large-button application-fill "; 
+	}
+	for (const drink in drinks) {
+		if (settings[drink]==="true") {
+			drinks[drink].button.style.display = "inline";
+			drinks[drink].button.class = button_class + `button-${found}-${count}`;
+			drinks[drink].text.style.display = "inline";
+			drinks[drink].text.class = `text-${found}-${count}`;
+			found += 1;
+			console.log(drinks[drink].button.class);
+		} else {
+			drinks[drink].button.style.display = "none";
+			drinks[drink].text.style.display = "none";
+
+		}
+	}
+}
+
 const state = load_state();
 for (const drink in drinks) {
 	const drinkButton = document.getElementById(drink);
 	const drinkText   = document.getElementById(drink + "-text");
 	drinks[drink].text = drinkText;
+	drinks[drink].button = drinkButton;
 	const api_name = drinks[drink].api_name;
 	drinkText.text = state["data"][drink];
 
@@ -133,7 +172,7 @@ for (const drink in drinks) {
 		} else {
 			let state = load_state();
 			state["to_add"].push(api_name);
-			save_state(state["data"], state["to_add"], state["to_delete"]);
+			save_state(state["data"], state["to_add"], state["to_delete"], false);
 			console.log("Could not connect to phone");
 		}
 	});
@@ -148,15 +187,19 @@ messaging.peerSocket.onmessage = evt => {
 		data["log_history"].push(evt.data.id);
 		fs.writeFileSync("today.txt", data, "json");
 	}
-	if ("key" in evt.data) {
+	if ("key1" in evt.data) {
+		let settings = fs.readFileSync("settings", "json");
+		settings[evt.data.key1] = evt.data.value;
+		fs.writeFileSync("settings", settings, "json");
 		if (evt.data.value === "false") {
-			document.getElementById(evt.data.key).style.display = "none";
-			document.getElementById(evt.data.key+"-text").style.display = "none";
-		} else {
-			document.getElementById(evt.data.key).style.display = "inline";
-			document.getElementById(evt.data.key+"-text").style.display = "inline";
-		}
+			document.getElementById(evt.data.key1).style.display = "none";
+			document.getElementById(evt.data.key1+"-text").style.display = "none";
 
+		} else {
+			document.getElementById(evt.data.key1).style.display = "inline";
+			document.getElementById(evt.data.key1+"-text").style.display = "inline";
+		}
+		render();
 	}
 }
 
@@ -171,6 +214,7 @@ messaging.peerSocket.onopen = function () {
 		console.log(JSON.stringify(drink));
 		messaging.peerSocket.send({"undo": drink});
 	}
-	save_state(state["data"], [], []);
+	save_state(state["data"], [], [], false);
 }
 
+render();

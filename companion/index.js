@@ -95,7 +95,7 @@ settingsStorage.addEventListener("change", evt => {
 	console.log(JSON.stringify(evt));
 	if (evt.oldValue !== evt.newValue) {
 		if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-			messaging.peerSocket.send({key: evt.key, value: evt.newValue});
+			messaging.peerSocket.send({key1: evt.key, value: evt.newValue});
 		}
 	}
 });

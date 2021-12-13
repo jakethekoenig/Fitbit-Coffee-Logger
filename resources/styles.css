@@ -16,15 +16,15 @@
 }
 
 
-.coffee-button #image {
+#coffee #image {
 	href: "coffee.png";
 }
 
-.tea-button #image {
+#tea #image {
 	href: "tea.png";
 }
 
-.energy-button #image {
+#energy #image {
 	href: "energy.png";
 }
 
@@ -32,17 +32,32 @@
 	href: "undo.png";
 }
 
-#coffee {
+.button-1-1 {
+	x: 65;
+	y: 70;
+}
+
+.button-1-2 {
+	x: 27;
+	y: 20;
+}
+
+.button-2-2 {
+	x: 27;
+	y: 196;
+}
+
+.button-1-3 {
 	x: 17;
 	y: 17;
 }
 
-#tea {
+.button-2-3 {
 	x: 17;
 	y: 120;
 }
 
-#energy {
+.button-3-3 {
 	x: 17;
 	y: 221;
 }
@@ -52,18 +67,32 @@
 	y: 221;
 }
 
-#coffee-text {
+.text-1-3 {
 	x: 130;
 	y: 75;
 }
 
-#tea-text {
+.text-2-3 {
 	x: 130;
 	y: 178;
 }
 
-#energy-text {
+.text-3-3 {
 	x: 130;
 	y: 281;
 }
 
+.text-1-2 {
+	x: 165;
+	y: 95;
+}
+
+.text-2-2 {
+	x: 165;
+	y: 271;
+}
+
+.text-1-1 {
+	x: 213;
+	y: 155;
+}
