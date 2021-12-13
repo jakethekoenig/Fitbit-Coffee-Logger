@@ -66,7 +66,7 @@ function load_state() {
 		}
 	}
 	if (!fs.existsSync("settings")) {
-		fs.writeFileSync("settings", {coffee: true, tea: true, energy: true}, "json");
+		fs.writeFileSync("settings", {coffee: true, tea: false, energy: false}, "json");
 		// TODO sync this to companion.
 	}
 	const settings = fs.readFileSync("settings", "json");
@@ -191,14 +191,6 @@ messaging.peerSocket.onmessage = evt => {
 		let settings = fs.readFileSync("settings", "json");
 		settings[evt.data.key1] = evt.data.value;
 		fs.writeFileSync("settings", settings, "json");
-		if (evt.data.value === "false") {
-			document.getElementById(evt.data.key1).style.display = "none";
-			document.getElementById(evt.data.key1+"-text").style.display = "none";
-
-		} else {
-			document.getElementById(evt.data.key1).style.display = "inline";
-			document.getElementById(evt.data.key1+"-text").style.display = "inline";
-		}
 		render();
 	}
 }
