@@ -1,5 +1,6 @@
 import * as messaging from "messaging";
 import { settingsStorage } from "settings";
+import { inbox, outbox } from "file-transfer";
 
 // Coffee
 // id=17222
@@ -77,6 +78,17 @@ messaging.peerSocket.onopen = () => {
 	restoreSettings();
 };
 
+async function processAllFiles() {
+	let file;
+	while ((file = await inbox.pop())) {
+		if (file.name === "settings") {
+			// The only reason this is sent is to initialize the defaults so I don't need to read the sent data.
+		// let data = await file.json();
+			settingsStorage.setItem("coffee", true);
+		}
+	}
+}
+
 messaging.peerSocket.onmessage = evt => {
 	let oath = get_oath();
 	if (oath) {
@@ -99,3 +111,7 @@ settingsStorage.addEventListener("change", evt => {
 		}
 	}
 });
+
+inbox.addEventListener("newfile", processAllFiles);
+
+processAllFiles();

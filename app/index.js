@@ -1,6 +1,8 @@
 import * as fs from "fs";
 import * as document from "document";
 import * as messaging from "messaging";
+import { encode } from "cbor";
+import { inbox, outbox } from "file-transfer";
 import { me } from "appbit";
 
 // On start up check for "today" file. Open it and if it has today property
@@ -66,7 +68,16 @@ function load_state() {
 		}
 	}
 	if (!fs.existsSync("settings")) {
-		fs.writeFileSync("settings", {coffee: true, tea: false, energy: false}, "json");
+		console.log("doesn't exist");
+		let default_setting = {coffee: "true", tea: "false", energy: "false"};
+		fs.writeFileSync("settings", default_setting, "json");
+		outbox.enqueueFile("settings")
+		.then(ft => {
+			console.log(`Transfer of ${ft.name} successfully queued.`);
+		})
+	  	.catch(err => {
+			console.log(`Failed to schedule transfer: ${err}`);
+		});
 		// TODO sync this to companion.
 	}
 	const settings = fs.readFileSync("settings", "json");
