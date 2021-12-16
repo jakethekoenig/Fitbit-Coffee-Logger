@@ -162,9 +162,18 @@ function render() {
 		} else {
 			drinks[drink].button.style.display = "none";
 			drinks[drink].text.style.display = "none";
-
 		}
 	}
+}
+
+function processAllFiles() {
+	let fileName;
+	while (fileName = inbox.nextFile()) {
+		let data = fs.readFileSync(fileName, "cbor");
+		let settings = fs.readFileSync("settings", "json");
+		settings[fileName] = data["value"];
+	}
+	render();
 }
 
 const state = load_state();
@@ -220,4 +229,7 @@ messaging.peerSocket.onopen = function () {
 	save_state(state["data"], [], [], false);
 }
 
+inbox.addEventListener("newfile", processAllFiles);
+
+processAllFiles();
 render();

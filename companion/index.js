@@ -1,4 +1,5 @@
 import * as messaging from "messaging";
+import { encode } from "cbor";
 import { settingsStorage } from "settings";
 import { inbox, outbox } from "file-transfer";
 
@@ -105,7 +106,14 @@ messaging.peerSocket.onmessage = evt => {
 
 settingsStorage.addEventListener("change", evt => {
 	console.log(JSON.stringify(evt));
-	if (evt.oldValue !== evt.newValue) {
+	if (evt.oldValue !== evt.newValue && evt.key !== "oath") { //TODO: replace with file-transfer
+		outbox.enqueue(`${evt.key}`, encode({value: evt.newValue}))
+			.then((ft) => {
+				console.log(`Transfer of ${ft.name} successfully queued.`);
+			})
+			.catch((error) => {
+				console.log(`Failed to queue ${evt.key}: ${error}`);
+			})
 		if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
 			messaging.peerSocket.send({key1: evt.key, value: evt.newValue});
 		}
