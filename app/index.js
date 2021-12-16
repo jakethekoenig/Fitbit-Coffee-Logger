@@ -172,6 +172,7 @@ function processAllFiles() {
 		let data = fs.readFileSync(fileName, "cbor");
 		let settings = fs.readFileSync("settings", "json");
 		settings[fileName] = data["value"];
+		fs.writeFileSync("settings", settings, "json");
 	}
 	render();
 }
@@ -206,12 +207,6 @@ messaging.peerSocket.onmessage = evt => {
 		console.log(evt.data.id);
 		data["log_history"].push(evt.data.id);
 		fs.writeFileSync("today.txt", data, "json");
-	}
-	if ("key1" in evt.data) {
-		let settings = fs.readFileSync("settings", "json");
-		settings[evt.data.key1] = evt.data.value;
-		fs.writeFileSync("settings", settings, "json");
-		render();
 	}
 }
 
