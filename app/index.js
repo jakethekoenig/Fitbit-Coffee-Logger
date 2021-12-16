@@ -72,13 +72,12 @@ function load_state() {
 		let default_setting = {coffee: "true", tea: "false", energy: "false"};
 		fs.writeFileSync("settings", default_setting, "json");
 		outbox.enqueueFile("settings")
-		.then(ft => {
-			console.log(`Transfer of ${ft.name} successfully queued.`);
-		})
-	  	.catch(err => {
-			console.log(`Failed to schedule transfer: ${err}`);
-		});
-		// TODO sync this to companion.
+			.then(ft => {
+				console.log(`Transfer of ${ft.name} successfully queued.`);
+			})
+			.catch(err => {
+				console.log(`Failed to schedule transfer: ${err}`);
+			});
 	}
 	const settings = fs.readFileSync("settings", "json");
 	return {data: last_data, to_add: to_add, to_delete: to_delete, settings: settings};
@@ -110,12 +109,14 @@ function undo() {
 			to_add.pop();
 		} else {
 			let last_id = log_history.pop();
-
-			if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-				messaging.peerSocket.send({"undo": last_id});
-			} else {
-				console.log("Could not connect to phone");
-				to_delete.push(last_id);
+			if (last_id) {
+				outbox.enqueue("undo", {"undo": last_id}, {encoding: "json"})
+					.then(ft => {
+						console.log(`Transfer of ${ft.name} ${last_id} successfully queued.`);
+					})
+					.catch(err => {
+						console.log(`Failed to schedule transfer: ${err}`);
+					});
 			}
 		}
 	}
@@ -128,9 +129,9 @@ undoButton.addEventListener("click", (evt) => {
 	undo();
 });
 
-const coffee = { name: "coffee", api_name: "Coffee", on: true };
-const tea    = { name: "tea",    api_name: "Green Tea, Unsweetened", on: true };
-const energy = { name: "energy", api_name: "Red Bull, Sugarfree", on: true };
+const coffee = { name: "coffee", api_name: "Coffee"};
+const tea    = { name: "tea",    api_name: "Green Tea, Unsweetened"};
+const energy = { name: "energy", api_name: "Red Bull, Sugarfree"};
 const drinks = {
 	coffee: coffee, 
 	tea: tea, 
@@ -169,10 +170,18 @@ function render() {
 function processAllFiles() {
 	let fileName;
 	while (fileName = inbox.nextFile()) {
-		let data = fs.readFileSync(fileName, "cbor");
-		let settings = fs.readFileSync("settings", "json");
-		settings[fileName] = data["value"];
-		fs.writeFileSync("settings", settings, "json");
+		if (fileName === "drink_key") {
+			let data  = fs.readFileSync("today.txt", "json");
+			let data_in = fs.readFileSync(fileName, "cbor");
+			console.log(data_in["value"]);
+			data["log_history"].push(data_in["value"]);
+			fs.writeFileSync("today.txt", data, "json");
+		} else {
+			let data = fs.readFileSync(fileName, "cbor");
+			let settings = fs.readFileSync("settings", "json");
+			settings[fileName] = data["value"];
+			fs.writeFileSync("settings", settings, "json");
+		}
 	}
 	render();
 }
@@ -188,26 +197,14 @@ for (const drink in drinks) {
 
 	drinkButton.addEventListener("click", (evt) => {
 		increment_drink(drink);
-		if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-			messaging.peerSocket.send({"drink": api_name});
-		} else {
-			let state = load_state();
-			state["to_add"].push(api_name);
-			save_state(state["data"], state["to_add"], state["to_delete"], false);
-			console.log("Could not connect to phone");
-		}
+		outbox.enqueue("drink", {"drink": api_name}, {encoding: "json"})
+			.then(ft => {
+				console.log(`Transfer of ${ft.name}, ${api_name} successfully queued.`);
+			})
+			.catch(err => {
+				console.log(`Failed to schedule transfer: ${err}`);
+			});
 	});
-
-}
-
-messaging.peerSocket.onmessage = evt => {
-	console.log(JSON.stringify(evt));
-	if ("id" in evt.data) {
-		let data  = fs.readFileSync("today.txt", "json");
-		console.log(evt.data.id);
-		data["log_history"].push(evt.data.id);
-		fs.writeFileSync("today.txt", data, "json");
-	}
 }
 
 messaging.peerSocket.onopen = function () {

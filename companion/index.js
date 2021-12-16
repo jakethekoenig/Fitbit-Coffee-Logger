@@ -46,9 +46,13 @@ function drink(accessToken, drink_name) {
 			let myData = {
 				id: data.foodLog.logId
 			}
-			if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-				messaging.peerSocket.send(myData);
-			}
+			outbox.enqueue("drink_key", encode({value: data.foodLog.logId}))
+				.then((ft) => {
+					console.log(`Transfer of ${ft.name} successfully queued.`);
+				})
+				.catch((error) => {
+					console.log(`Failed to queue ${evt.key}: ${error}`);
+				});
 		}).catch(err => console.log('[FETCH]: ' + err));
 }
 
@@ -58,16 +62,6 @@ function today() {
 	return  `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
 
-function restoreSettings() {
-	for (let index = 0; index < settingsStorage.length; index++) {
-		let key = settingsStorage.key(index);
-		if (key && key === "oauth") {
-			// We already have an oauth token
-			let data = JSON.parse(settingsStorage.getItem(key))
-		}
-	}
-}
-
 function get_oath() {
 	let maybe_oath = settingsStorage.getItem("oauth");
 	if (maybe_oath) {
@@ -75,38 +69,32 @@ function get_oath() {
 	}
 	return undefined;
 }
-messaging.peerSocket.onopen = () => {
-	restoreSettings();
-};
 
 async function processAllFiles() {
 	let file;
+	let oath = get_oath();
 	while ((file = await inbox.pop())) {
 		if (file.name === "settings") {
 			// The only reason this is sent is to initialize the defaults so I don't need to read the sent data.
 		// let data = await file.json();
 			settingsStorage.setItem("coffee", true);
 		}
-	}
-}
-
-messaging.peerSocket.onmessage = evt => {
-	let oath = get_oath();
-	if (oath) {
-		if ("drink" in evt.data) {
-			console.log(evt.data.drink);
-			drink(oath.access_token, evt.data.drink);
+		if (file.name === "undo" && oath) {
+			let data = await file.json();
+			console.log(JSON.stringify(data));
+			delete_drink(oath.access_token, data["undo"]);
 		}
-		if ("undo" in evt.data) {
-			console.log(evt.data.undo);
-			delete_drink(oath.access_token, evt.data.undo);
+		if (file.name === "drink" && oath) {
+			let data = await file.json();
+			console.log(JSON.stringify(data));
+			drink(oath.access_token, data["drink"]);
 		}
 	}
 }
 
 settingsStorage.addEventListener("change", evt => {
 	console.log(JSON.stringify(evt));
-	if (evt.oldValue !== evt.newValue && evt.key !== "oath") { //TODO: replace with file-transfer
+	if (evt.oldValue !== evt.newValue && evt.key !== "oath") {
 		outbox.enqueue(`${evt.key}`, encode({value: evt.newValue}))
 			.then((ft) => {
 				console.log(`Transfer of ${ft.name} successfully queued.`);
@@ -114,12 +102,8 @@ settingsStorage.addEventListener("change", evt => {
 			.catch((error) => {
 				console.log(`Failed to queue ${evt.key}: ${error}`);
 			})
-		if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-			messaging.peerSocket.send({key1: evt.key, value: evt.newValue});
-		}
 	}
 });
 
 inbox.addEventListener("newfile", processAllFiles);
-
 processAllFiles();
