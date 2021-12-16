@@ -28,16 +28,6 @@ function make_today() {
 	return data;
 }
 
-function save_state(data, to_add, to_delete, settings) {
-	let today = new Date();
-	fs.writeFileSync("to_add", {data: to_add, date: today}, "json");
-	fs.writeFileSync("to_delete", {data: to_delete, date: today}, "json");
-	fs.writeFileSync("today.txt", data, "json");
-	if (settings) {
-		fs.writeFileSync("settings", settings, "json");
-	}
-}
-
 function load_state() {
 	if (!fs.existsSync("today.txt")) {
 		let last_data = make_today();
@@ -52,21 +42,6 @@ function load_state() {
 		last_data = make_today();
 	}
 
-	const to_add = []; // Just strings of drink names to send
-	if (fs.existsSync("to_add")) {
-		let last_add = fs.readFileSync("to_add", "json");
-		if (today.getDate() === (new Date(last_add["date"])).getDate()) { // I won't persist overnight
-			to_add = last_add["data"];
-		}
-	}
-
-	const to_delete = []; // ids of drinks
-	if (fs.existsSync("to_delete")) {
-		let last_delete = fs.readFileSync("to_delete", "json");
-		if (today.getDate() === (new Date(last_delete["date"])).getDate()) { // I won't persist overnight
-			to_delete = last_delete["data"];
-		}
-	}
 	if (!fs.existsSync("settings")) {
 		console.log("doesn't exist");
 		let default_setting = {coffee: "true", tea: "false", energy: "false"};
@@ -80,7 +55,7 @@ function load_state() {
 			});
 	}
 	const settings = fs.readFileSync("settings", "json");
-	return {data: last_data, to_add: to_add, to_delete: to_delete, settings: settings};
+	return {data: last_data, settings: settings};
 }
 
 
@@ -95,8 +70,6 @@ function increment_drink(drink) {
 function undo() {
 	let state = load_state();
 	let data  = state["data"];
-	let to_add = state["to_add"];
-	let to_delete = state["to_delete"];
 
 	let hist = data["history"];
 	let log_history = data["log_history"];
@@ -105,22 +78,18 @@ function undo() {
 		data[last] = data[last] - 1;
 		drinks[last].text.text = data[last];
 
-		if (to_add.length !== 0) {
-			to_add.pop();
-		} else {
-			let last_id = log_history.pop();
-			if (last_id) {
-				outbox.enqueue("undo", {"undo": last_id}, {encoding: "json"})
-					.then(ft => {
-						console.log(`Transfer of ${ft.name} ${last_id} successfully queued.`);
-					})
-					.catch(err => {
-						console.log(`Failed to schedule transfer: ${err}`);
-					});
-			}
+		let last_id = log_history.pop();
+		if (last_id) {
+			outbox.enqueue("undo", {"undo": last_id}, {encoding: "json"})
+				.then(ft => {
+					console.log(`Transfer of ${ft.name} ${last_id} successfully queued.`);
+				})
+				.catch(err => {
+					console.log(`Failed to schedule transfer: ${err}`);
+				});
 		}
 	}
-	save_state(data, to_add, to_delete, false);
+	fs.writeFileSync("today.txt", data, "json");
 }
 
 
@@ -205,20 +174,6 @@ for (const drink in drinks) {
 				console.log(`Failed to schedule transfer: ${err}`);
 			});
 	});
-}
-
-messaging.peerSocket.onopen = function () {
-	console.log("socket opened");
-	const state = load_state();
-	for (drink in state["to_add"]) {
-		console.log(JSON.stringify(drink));
-		messaging.peerSocket.send({"drink": drink});
-	}
-	for (drink in state["to_delete"]) {
-		console.log(JSON.stringify(drink));
-		messaging.peerSocket.send({"undo": drink});
-	}
-	save_state(state["data"], [], [], false);
 }
 
 inbox.addEventListener("newfile", processAllFiles);
