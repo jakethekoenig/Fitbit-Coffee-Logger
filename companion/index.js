@@ -81,12 +81,10 @@ async function processAllFiles() {
 		}
 		if (file.name === "undo" && oath) {
 			let data = await file.json();
-			console.log(JSON.stringify(data));
 			delete_drink(oath.access_token, data["undo"]);
 		}
 		if (file.name === "drink" && oath) {
 			let data = await file.json();
-			console.log(JSON.stringify(data));
 			drink(oath.access_token, data["drink"]);
 		}
 	}

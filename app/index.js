@@ -43,7 +43,6 @@ function load_state() {
 	}
 
 	if (!fs.existsSync("settings")) {
-		console.log("doesn't exist");
 		let default_setting = {coffee: "true", tea: "false", energy: "false", color: "orange"};
 		fs.writeFileSync("settings", default_setting, "json");
 		outbox.enqueueFile("settings")
@@ -110,7 +109,6 @@ const drinks = {
 function render() {
 	let count = 0;
 	let settings = fs.readFileSync("settings", "json");
-	console.log(JSON.stringify(settings));
 	for (const drink in drinks) {
 		if (settings[drink]==="true") {
 			count += 1;
@@ -130,7 +128,6 @@ function render() {
 			drinks[drink].text.style.fill = JSON.parse(settings["color"]);
 			drinks[drink].text.class = `text-${found}-${count}`;
 			found += 1;
-			console.log(drinks[drink].button.class);
 		} else {
 			drinks[drink].button.style.display = "none";
 			drinks[drink].text.style.display = "none";
@@ -145,7 +142,6 @@ function processAllFiles() {
 		if (fileName === "drink_key") {
 			let data  = fs.readFileSync("today.txt", "json");
 			let data_in = fs.readFileSync(fileName, "cbor");
-			console.log(data_in["value"]);
 			data["log_history"].push(data_in["value"]);
 			fs.writeFileSync("today.txt", data, "json");
 		} else {
