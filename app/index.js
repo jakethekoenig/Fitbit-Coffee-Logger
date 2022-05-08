@@ -42,8 +42,19 @@ function load_state() {
 		last_data = make_today();
 	}
 
+ 
+  let default_setting = {coffee: "true", tea: "false", energy: "false", color: "orange"};
+  let use_defaults = false;
+  
 	if (!fs.existsSync("settings")) {
-		let default_setting = {coffee: "true", tea: "false", energy: "false", color: "orange"};
+    use_defaults = true;
+  } 
+  else if (fs.readFileSync("settings", "json").length == undefined) {
+    use_defaults = true;
+  }
+  if (use_defaults == true) {
+    console.log("defaults used");
+		
 		fs.writeFileSync("settings", default_setting, "json");
 		outbox.enqueueFile("settings")
 			.then(ft => {
@@ -52,7 +63,9 @@ function load_state() {
 			.catch(err => {
 				console.log(`Failed to schedule transfer: ${err}`);
 			});
-	}
+	} else {
+    console.log("no defaults");
+  }
 	const settings = fs.readFileSync("settings", "json");
 	return {data: last_data, settings: settings};
 }
@@ -109,6 +122,12 @@ const drinks = {
 function render() {
 	let count = 0;
 	let settings = fs.readFileSync("settings", "json");
+  let settings_color = "";
+  if(settings["color"].length == undefined) {
+    settings_color = "orange";
+  } else {
+    settings_color = settings["color"];
+  }
 	for (const drink in drinks) {
 		if (settings[drink]==="true") {
 			count += 1;
@@ -122,18 +141,18 @@ function render() {
 	for (const drink in drinks) {
 		if (settings[drink]==="true") {
 			drinks[drink].button.style.display = "inline";
-			drinks[drink].button.style.fill = JSON.parse(settings["color"]);
-			drinks[drink].button.class = button_class + `button-${found}-${count}`;
+			drinks[drink].button.style.fill = settings_color;
+			drinks[drink].button.class = button_class  + " " + `button-${found}-${count}`;
 			drinks[drink].text.style.display = "inline";
-			drinks[drink].text.style.fill = JSON.parse(settings["color"]);
+			drinks[drink].text.style.fill = settings_color;
 			drinks[drink].text.class = `text-${found}-${count}`;
 			found += 1;
 		} else {
 			drinks[drink].button.style.display = "none";
 			drinks[drink].text.style.display = "none";
 		}
-	}
-	document.getElementById("undo").style.fill = JSON.parse(settings["color"]);
+	}  
+	document.getElementById("undo").style.fill = settings_color;
 }
 
 function processAllFiles() {
@@ -178,4 +197,5 @@ for (const drink in drinks) {
 inbox.addEventListener("newfile", processAllFiles);
 
 processAllFiles();
-render();
+// Removal of redundant render call.
+// render();

@@ -27,8 +27,36 @@
 	href: "energy.png";
 }
 
-.undo-button #image {
+#undo #image {
 	href: "undo.png";
+}
+
+.orange	{
+  fill: orange;
+}
+.tomato	{
+  fill: tomato;
+}
+.gold	{
+  fill: gold;
+}
+.aquamarine	{
+  fill: aquamarine;
+}
+.deepskyblue	{
+  fill: deepskyblue;
+}
+.plum	{
+  fill: plum;
+}
+.red {
+  fill: red;
+}
+.blue {
+  fill: blue;
+}
+.green {
+  fill: green;
 }
 
 .button-1-1 {
