@@ -10,7 +10,7 @@
 	"fitbit": {
 		"appUUID": "60ea80eb-ebf3-491d-a66c-fb1dd4434fd5",
 		"appType": "app",
-		"appDisplayName": "Coffee Logger",
+		"appDisplayName": "Caffeine Tracker",
 		"iconFile": "resources/icon.png",
 		"wipeColor": "#ffffff",
 		"requestedPermissions": [
